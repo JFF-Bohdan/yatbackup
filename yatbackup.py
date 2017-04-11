@@ -118,8 +118,12 @@ class YatBackup(LastErrorHolder):
         if not self.config.has_section("compressors"):
             return algo
 
-        if self.config.has_option("compressors", algo):
-            return self.config["compressors"][algo]
+        lookup = algo
+        if lookup == "bz2":
+            lookup = "tar"
+
+        if self.config.has_option("compressors", lookup):
+            return self.config["compressors"][lookup]
 
         return algo
 
@@ -204,22 +208,27 @@ class YatBackup(LastErrorHolder):
 
         return ret[0][0]
 
+    def __getTargetFileName(self):
+        now = datetime.datetime.now()
+
+        ret = os.path.basename(self.targetDirectory)
+        ret = "{}-{}.{}".format(
+            ret,
+            now.strftime("%Y%m%dT%H%M%S"),
+            self.__getExtenstionForCompressor(self.compressingAlgo)
+        )
+        ret = os.path.join(self.destinationDirectory, ret)
+        ret = os.path.normpath(ret)
+
+        return ret
+
     def __compressDirectory(self):
         args = []
 
         compressorExecutable = self.__substCompressor(self.compressingAlgo)
 
-        #calculating target file name
-        now = datetime.datetime.now()
-
-        self.destinationFileName = os.path.basename(self.targetDirectory)
-        self.destinationFileName = "{}-{}.{}".format(
-            self.destinationFileName,
-            now.strftime("%Y%m%dT%H%M%S"),
-            self.__getExtenstionForCompressor(self.compressingAlgo)
-        )
-        self.destinationFileName = os.path.join(self.destinationDirectory, self.destinationFileName)
-        self.destinationFileName = os.path.normpath(self.destinationFileName)
+        # calculating destination file name
+        self.destinationFileName = self.__getTargetFileName()
 
         excludeItems = self.__combineIgnoreItems(self.compressingAlgo)
 
@@ -231,6 +240,15 @@ class YatBackup(LastErrorHolder):
 
             args.append(self.destinationFileName)
             args.append(self.targetDirectory)
+            args.extend(excludeItems)
+        elif self.compressingAlgo == "bz2":
+            args = [
+                compressorExecutable,
+                "-cvjSf",
+                self.destinationFileName,
+                self.targetDirectory
+            ]
+
             args.extend(excludeItems)
 
         self.logger.debug("args = {}".format(args))
