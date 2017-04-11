@@ -125,7 +125,7 @@ class YatBackup(LastErrorHolder):
         if self.config.has_option("compressors", lookup):
             return self.config["compressors"][lookup]
 
-        return algo
+        return lookup
 
     def __getExtenstionForCompressor(self, algo):
         """
