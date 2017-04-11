@@ -87,3 +87,9 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+#project files
+cached_uglify
+.idea
+doc
+dest
