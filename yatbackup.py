@@ -115,9 +115,6 @@ class YatBackup(LastErrorHolder):
         return True
 
     def __substCompressor(self, algo):
-        if not self.config.has_section("compressors"):
-            return algo
-
         lookup = algo
         if lookup == "bz2":
             lookup = "tar"
